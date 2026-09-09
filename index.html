@@ -6,8 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ardoise">
-<meta name="theme-color" content="#F2F2F0" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1E1E1E" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F2F2F0">
+<meta name="color-scheme" content="light">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon.png">
 <title>Ardoise</title>
@@ -16,10 +16,6 @@
     --bg: #F2F2F0; --card: #FFFFFF; --ink: #1C1C1E; --muted: #6E6E73; --line: rgba(0,0,0,.06);
     --accent: #2A78D6; --green: #1F9A1F; --orange: #EB6834; --red: #E34948; --chip: rgba(0,0,0,.04);
     --shadow: 0 2px 8px rgba(0,0,0,.06);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #1E1E1E; --card: rgba(255,255,255,.06); --ink: #F2F2F2; --muted: #9A9A9E; --line: rgba(255,255,255,.08);
-            --accent: #3987E5; --chip: rgba(255,255,255,.06); --shadow: none; }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--ink);
@@ -131,7 +127,7 @@
   ];
   const PRESETS = [60, 90, 120, 180];
   const MIN_MINUTES = 60, MAX_MINUTES = 480;
-  const dark = () => matchMedia('(prefers-color-scheme: dark)').matches;
+  const dark = () => false; // thème clair uniquement
 
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
