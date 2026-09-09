@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ardoise">
+<meta name="theme-color" content="#F2F2F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E1E1E" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Ardoise</title>
+<style>
+  :root {
+    --bg: #F2F2F0; --card: #FFFFFF; --ink: #1C1C1E; --muted: #6E6E73; --line: rgba(0,0,0,.06);
+    --accent: #2A78D6; --green: #1F9A1F; --orange: #EB6834; --red: #E34948; --chip: rgba(0,0,0,.04);
+    --shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1E1E1E; --card: rgba(255,255,255,.06); --ink: #F2F2F2; --muted: #9A9A9E; --line: rgba(255,255,255,.08);
+            --accent: #3987E5; --chip: rgba(255,255,255,.06); --shadow: none; }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+  body { padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)); }
+  h1 { font-size: 28px; font-weight: 700; margin: 8px 0 2px; font-family: -apple-system, "SF Pro Rounded", system-ui; letter-spacing: -.01em; }
+  .sub { color: var(--muted); font-size: 15px; margin: 0 0 14px; }
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: var(--chip); color: var(--muted); white-space: nowrap; margin-top: 12px; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .status.on { color: var(--green); background: rgba(31,154,31,.12); } .status.on .dot { background: var(--green); }
+  .status.pending { color: var(--orange); background: rgba(235,104,52,.12); } .status.pending .dot { background: var(--orange); }
+  .card { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--line); padding: 14px; margin-bottom: 14px; }
+  .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .student { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: var(--chip); border: 1.5px solid transparent; cursor: pointer; }
+  .student.sel { background: var(--tint); border-color: var(--c); }
+  .badge { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: var(--c); background: var(--tint); flex: none; }
+  .student .name { font-weight: 600; font-size: 15px; } .student .lvl { font-size: 12px; color: var(--muted); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .seg { flex: 1 1 auto; text-align: center; padding: 10px 6px; border-radius: 10px; background: var(--chip); font-weight: 600; font-size: 15px; border: 1.5px solid transparent; cursor: pointer; }
+  .seg.sel { color: var(--accent); background: rgba(42,120,214,.12); border-color: var(--accent); }
+  .stepper { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+  .stepper button { width: 38px; height: 38px; border-radius: 10px; border: 0; background: var(--chip); color: var(--ink); font-size: 20px; font-weight: 600; }
+  .stepper span { min-width: 58px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+  input[type=text], input[type=date], input[type=url] { width: 100%; font: inherit; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); -webkit-appearance: none; }
+  input::placeholder { color: var(--muted); }
+  .primary { width: 100%; padding: 15px; border: 0; border-radius: 14px; background: var(--accent); color: #fff; font: inherit; font-weight: 700; font-size: 17px; }
+  .primary:disabled { opacity: .45; }
+  .item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .item:first-of-type { border-top: 0; }
+  .item .t { flex: 1; min-width: 0; } .item .t b { display: block; font-size: 15px; } .item .t span { color: var(--muted); font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .state { font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; white-space: nowrap; }
+  .state.q { color: var(--orange); background: rgba(235,104,52,.12); }
+  .state.s { color: var(--accent); background: rgba(42,120,214,.12); }
+  .state.a { color: var(--green); background: rgba(31,154,31,.12); }
+  .item .del { border: 0; background: none; color: var(--muted); font-size: 18px; padding: 4px; }
+  .link { background: none; border: 0; color: var(--accent); font: inherit; font-weight: 600; padding: 0; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 18px 0; }
+  .toast { position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); background: var(--ink); color: var(--bg); padding: 12px 16px; border-radius: 12px; text-align: center; font-weight: 600; opacity: 0; transform: translateY(10px); transition: .25s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+  .hidden { display: none !important; }
+  footer { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Ardoise</h1>
+    <p class="sub" id="today"></p>
+  </div>
+  <div class="status" id="status"><span class="dot"></span><span id="statusText">…</span></div>
+</header>
+
+<section id="setup" class="card hidden">
+  <p class="label">Clé de liaison</p>
+  <p class="muted" style="margin:0 0 10px">Ouvrez « Téléphone » dans Ardoise sur le Mac et recopiez la clé, ou scannez le QR code.</p>
+  <input type="text" id="keyInput" placeholder="ardoise-xxxxxxxxxx" autocapitalize="none" autocorrect="off" spellcheck="false">
+  <div style="height:8px"></div>
+  <input type="url" id="serverInput" placeholder="https://ntfy.sh" autocapitalize="none" autocorrect="off">
+  <div style="height:10px"></div>
+  <button class="primary" id="saveKey">Connecter</button>
+</section>
+
+<section id="main" class="hidden">
+  <div class="card">
+    <p class="label">Élève</p>
+    <div class="grid" id="students"></div>
+    <p class="empty hidden" id="noStudents">Aucun élève reçu. Ouvrez Ardoise sur le Mac, puis <button class="link" id="refreshStudents">actualiser</button>.</p>
+  </div>
+  <div class="card">
+    <p class="label">Durée</p>
+    <div class="row" id="durations"></div>
+    <div class="row hidden" id="customRow" style="margin-top:8px">
+      <span class="muted">Par pas de 15 min, 1 h minimum</span>
+      <div class="stepper"><button id="minus">−</button><span id="durationText">1 h</span><button id="plus">+</button></div>
+    </div>
+  </div>
+  <div class="card">
+    <p class="label">Date</p>
+    <input type="date" id="date">
+    <p class="label" style="margin-top:12px">Sujets abordés</p>
+    <input type="text" id="topics" placeholder="Dérivées, exercices 12 à 15…" autocapitalize="sentences">
+  </div>
+  <button class="primary" id="save" disabled>Enregistrer le cours</button>
+
+  <div class="card" style="margin-top:14px">
+    <div class="row" style="justify-content:space-between">
+      <p class="label" style="margin:0">Derniers cours</p>
+      <button class="link" id="syncNow">Synchroniser</button>
+    </div>
+    <div id="list"></div>
+    <p class="empty" id="emptyList">Rien pour l'instant.</p>
+  </div>
+  <footer>
+    <span class="muted" id="foot"></span>
+    <button class="link" id="settings">Réglages</button>
+  </footer>
+</section>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const PALETTE = [
+    ['#2A78D6','#3987E5'], ['#008300','#1F9A1F'], ['#E87BA4','#D55181'], ['#EDA100','#C98500'],
+    ['#1BAF7A','#199E70'], ['#EB6834','#D95926'], ['#4A3AA7','#9085E9'], ['#E34948','#E66767'],
+  ];
+  const PRESETS = [60, 90, 120, 180];
+  const MIN_MINUTES = 60, MAX_MINUTES = 480;
+  const dark = () => matchMedia('(prefers-color-scheme: dark)').matches;
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+  const state = {
+    key: store.get('key', ''), server: store.get('server', 'https://ntfy.sh'),
+    students: store.get('students', []), queue: store.get('queue', []), sent: store.get('sent', []),
+    since: store.get('since', 0), studentId: null, minutes: 60, custom: false, syncing: false, online: navigator.onLine,
+  };
+  const persist = () => { store.set('key', state.key); store.set('server', state.server); store.set('students', state.students);
+    store.set('queue', state.queue); store.set('sent', state.sent); store.set('since', state.since); };
+
+  // Clé passée dans l'URL (QR code) : ?k=…&s=…
+  const params = new URLSearchParams(location.search);
+  if (params.get('k')) { state.key = params.get('k').trim(); if (params.get('s')) state.server = params.get('s'); persist();
+    history.replaceState(null, '', location.pathname); }
+
+  const base = () => state.server.replace(/\/+$/, '');
+  const fmtDuration = m => { const h = Math.floor(m / 60), r = m % 60; return h === 0 ? `${m} min` : r === 0 ? `${h} h` : `${h} h ${String(r).padStart(2, '0')}`; };
+  const fmtDate = day => { const [y, m, d] = day.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }); };
+  const uuid = () => crypto.randomUUID ? crypto.randomUUID() : 'x' + Date.now() + Math.random().toString(16).slice(2);
+  const toast = t => { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 1800); };
+  const localDay = d => { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
+
+  function render() {
+    $('today').textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const setup = !state.key;
+    $('setup').classList.toggle('hidden', !setup);
+    $('main').classList.toggle('hidden', setup);
+    $('keyInput').value = state.key; $('serverInput').value = state.server;
+    if (setup) { $('status').className = 'status'; $('statusText').textContent = 'Non appairé'; return; }
+
+    const pending = state.queue.length;
+    const st = $('status');
+    if (pending) { st.className = 'status pending'; $('statusText').textContent = `${pending} à envoyer`; }
+    else if (state.online) { st.className = 'status on'; $('statusText').textContent = 'Synchronisé'; }
+    else { st.className = 'status'; $('statusText').textContent = 'Hors ligne'; }
+
+    const grid = $('students'); grid.innerHTML = '';
+    state.students.forEach(s => {
+      const c = PALETTE[((s.c % 8) + 8) % 8][dark() ? 1 : 0];
+      const el = document.createElement('div');
+      el.className = 'student' + (s.id === state.studentId ? ' sel' : '');
+      el.style.setProperty('--c', c); el.style.setProperty('--tint', c + (dark() ? '38' : '24'));
+      const initials = ((s.n[0] || '?') + (s.f ? s.f[0] : '')).toUpperCase();
+      el.innerHTML = `<div class="badge">${initials}</div><div><div class="name">${esc(s.n)}</div><div class="lvl">${esc(s.l || s.f || '')}</div></div>`;
+      el.onclick = () => { state.studentId = s.id; render(); };
+      grid.appendChild(el);
+    });
+    $('noStudents').classList.toggle('hidden', state.students.length > 0);
+
+    const d = $('durations'); d.innerHTML = '';
+    const custom = state.custom || !PRESETS.includes(state.minutes);
+    PRESETS.forEach(m => { const b = document.createElement('div'); b.className = 'seg' + (!custom && m === state.minutes ? ' sel' : '');
+      b.textContent = fmtDuration(m); b.onclick = () => { state.minutes = m; state.custom = false; render(); }; d.appendChild(b); });
+    const other = document.createElement('div'); other.className = 'seg' + (custom ? ' sel' : ''); other.textContent = 'Autre';
+    other.onclick = () => { state.custom = true; render(); }; d.appendChild(other);
+    $('customRow').classList.toggle('hidden', !custom);
+    $('durationText').textContent = fmtDuration(state.minutes);
+    $('save').disabled = !state.studentId;
+
+    const list = $('list'); list.innerHTML = '';
+    const items = [...state.queue.map(q => ({ ...q, state: 'q' })), ...state.sent.slice(0, 10)];
+    items.forEach(it => {
+      const s = state.students.find(x => x.id === it.studentId);
+      const row = document.createElement('div'); row.className = 'item';
+      const label = it.state === 'q' ? 'À envoyer' : it.state === 'a' ? 'Reçu par le Mac' : 'Envoyé';
+      row.innerHTML = `<div class="t"><b>${esc(s ? s.n : it.studentName || 'Élève')} · ${fmtDuration(it.minutes)}</b><span>${fmtDate(it.date)}${it.topics ? ' · ' + esc(it.topics) : ''}</span></div><span class="state ${it.state}">${label}</span>`;
+      if (it.state === 'q') { const del = document.createElement('button'); del.className = 'del'; del.textContent = '×';
+        del.onclick = () => { state.queue = state.queue.filter(q => q.id !== it.id); persist(); render(); }; row.appendChild(del); }
+      list.appendChild(row);
+    });
+    $('emptyList').classList.toggle('hidden', items.length > 0);
+    $('foot').textContent = `Clé ${state.key}`;
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  async function post(payload) {
+    const r = await fetch(`${base()}/${encodeURIComponent(state.key)}`, { method: 'POST', body: JSON.stringify(payload) });
+    if (!r.ok) throw new Error('relais ' + r.status);
+  }
+
+  // Lit ce que le Mac a publié : accusés de réception et liste des élèves.
+  async function poll() {
+    const since = state.since ? state.since : '12h';
+    const r = await fetch(`${base()}/${encodeURIComponent(state.key)}-mac/json?poll=1&since=${since}`);
+    if (!r.ok) throw new Error('relais ' + r.status);
+    const text = await r.text();
+    let students = null, acked = new Set(), studentsTime = 0;
+    text.split('\n').filter(Boolean).forEach(line => {
+      let env; try { env = JSON.parse(line); } catch { return; }
+      if (env.event !== 'message') return;
+      state.since = Math.max(state.since, env.time || 0);
+      let msg; try { msg = JSON.parse(env.message); } catch { return; }
+      if (msg.type === 'students' && (env.time || 0) >= studentsTime) { students = msg.students; studentsTime = env.time || 0; }
+      if (msg.type === 'ack') (msg.ids || []).forEach(id => acked.add(id));
+    });
+    if (students) state.students = students;
+    if (acked.size) {
+      state.queue = state.queue.filter(q => !acked.has(q.id));
+      state.sent.forEach(s => { if (acked.has(s.id)) s.state = 'a'; });
+    }
+    persist();
+  }
+
+  async function sync(showToast) {
+    if (state.syncing || !state.key) return;
+    state.syncing = true;
+    try {
+      if (!state.students.length || showToast) await post({ type: 'hello' });
+      for (const item of [...state.queue]) {
+        await post({ type: 'lesson', id: item.id, studentId: item.studentId, date: item.date, minutes: item.minutes, topics: item.topics });
+        state.queue = state.queue.filter(q => q.id !== item.id);
+        state.sent.unshift({ ...item, state: 's' });
+        state.sent = state.sent.slice(0, 30);
+        persist();
+      }
+      await poll();
+      state.online = true;
+      if (showToast) toast('Synchronisé');
+    } catch (e) {
+      state.online = false;
+      if (showToast) toast('Mac ou relais injoignable');
+    } finally { state.syncing = false; render(); }
+  }
+
+  $('saveKey').onclick = () => {
+    const k = $('keyInput').value.trim(); if (!k) return;
+    state.key = k; state.server = $('serverInput').value.trim() || 'https://ntfy.sh'; state.since = 0; persist(); render(); sync(true);
+  };
+  $('settings').onclick = () => { if (confirm('Modifier la clé de liaison ? Les cours en attente sont conservés.')) { state.key = ''; persist(); render(); } };
+  $('refreshStudents').onclick = () => sync(true);
+  $('syncNow').onclick = () => sync(true);
+  $('minus').onclick = () => { state.minutes = Math.max(MIN_MINUTES, state.minutes - 15); render(); };
+  $('plus').onclick = () => { state.minutes = Math.min(MAX_MINUTES, state.minutes + 15); render(); };
+  $('save').onclick = () => {
+    const s = state.students.find(x => x.id === state.studentId); if (!s) return;
+    const when = $('date').value || localDay(new Date());
+    state.queue.push({ id: uuid(), studentId: s.id, studentName: s.n, date: when, minutes: state.minutes, topics: $('topics').value.trim() });
+    persist();
+    $('topics').value = ''; state.studentId = null; state.minutes = 60; state.custom = false; $('date').value = localDay(new Date());
+    render(); toast('Cours enregistré'); sync(false);
+  };
+
+  $('date').value = localDay(new Date());
+  addEventListener('online', () => sync(false));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { $('date').value = localDay(new Date()); sync(false); } });
+  setInterval(() => { if (!document.hidden && (state.queue.length || state.sent.some(s => s.state === 's'))) sync(false); }, 30000);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  render();
+  sync(false);
+})();
+</script>
+</body>
+</html>
