@@ -214,6 +214,7 @@
   const defaultTime = () => { const d = new Date(); let t = d.getHours() * 60 + d.getMinutes() - 60; t = Math.max(0, t - t % 15); return `${pad(Math.floor(t / 60))}:${pad(t % 60)}`; };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const studentOf = id => state.students.find(x => x.id === id);
+  const nameOf = s => s.f ? `${s.n} ${s.f}` : s.n; // « Victor C » : le Mac n'envoie que l'initiale du nom
   const colorOf = s => PALETTE[(((s ? s.c : 0) % 8) + 8) % 8][dark() ? 1 : 0];
   const initialsOf = s => s ? ((s.n[0] || '?') + (s.f ? s.f[0] : '')).toUpperCase() : '?';
   if (!state.month) state.month = monthKey(new Date());
@@ -256,7 +257,7 @@
       const el = document.createElement('div');
       el.className = 'student' + (s.id === state.studentId ? ' sel' : '');
       el.style.setProperty('--c', c); el.style.setProperty('--tint', c + (dark() ? '38' : '24'));
-      el.innerHTML = `<div class="badge">${initialsOf(s)}</div><div><div class="name">${esc(s.n)}</div><div class="lvl">${esc(s.l || s.f || '')}</div></div>`;
+      el.innerHTML = `<div class="badge">${initialsOf(s)}</div><div><div class="name">${esc(nameOf(s))}</div><div class="lvl">${esc(s.l || '')}</div></div>`;
       el.onclick = () => { state.studentId = s.id; render(); };
       grid.appendChild(el);
     });
@@ -279,7 +280,7 @@
       const s = studentOf(it.studentId);
       const row = document.createElement('div'); row.className = 'item';
       const label = it.state === 'q' ? 'À envoyer' : 'Envoyé, en attente du Mac';
-      row.innerHTML = `<div class="t"><b>${esc(s ? s.n : it.studentName || 'Élève')} · ${fmtDuration(it.minutes)}</b><span>${fmtDate(it.date)}${it.time ? ' · ' + fmtClock(it.time) : ''}${it.topics ? ' · ' + esc(it.topics) : ''}</span></div><span class="state ${it.state}">${label}</span>`;
+      row.innerHTML = `<div class="t"><b>${esc(s ? nameOf(s) : it.studentName || 'Élève')} · ${fmtDuration(it.minutes)}</b><span>${fmtDate(it.date)}${it.time ? ' · ' + fmtClock(it.time) : ''}${it.topics ? ' · ' + esc(it.topics) : ''}</span></div><span class="state ${it.state}">${label}</span>`;
       if (it.state === 'q') { const del = document.createElement('button'); del.className = 'del'; del.textContent = '×';
         del.onclick = () => { state.queue = state.queue.filter(q => q.id !== it.id); persist(); render(); }; row.appendChild(del); }
       list.appendChild(row);
@@ -300,7 +301,7 @@
       const s = studentOf(id); const c = colorOf(s);
       const el = document.createElement('div'); el.className = 'total';
       el.style.setProperty('--c', c); el.style.setProperty('--tint', c + '1C');
-      el.innerHTML = `<div class="badge">${initialsOf(s)}</div><span class="name">${esc(s ? s.n : 'Élève')}</span><span class="n">${t.n} séance${t.n > 1 ? 's' : ''} · ${fmtHours(t.m)}</span>`;
+      el.innerHTML = `<div class="badge">${initialsOf(s)}</div><span class="name">${esc(s ? nameOf(s) : 'Élève')}</span><span class="n">${t.n} séance${t.n > 1 ? 's' : ''} · ${fmtHours(t.m)}</span>`;
       totals.appendChild(el);
     });
     if (items.length) {
@@ -319,7 +320,7 @@
       const row = document.createElement('div'); row.className = 'item';
       const when = it.t ? `<span class="time">${fmtClock(it.t)}</span>` : '<span>heure non précisée</span>';
       const badge = it.state === 'q' ? '<span class="state q">À envoyer</span>' : it.state === 's' ? '<span class="state s">Envoyé</span>' : '';
-      row.innerHTML = `<div class="badge" style="--c:${colorOf(s)};--tint:${colorOf(s)}24">${initialsOf(s)}</div><div class="t"><b>${esc(s ? s.n : 'Élève')}</b>${when}</div>${badge}<span class="dur">${fmtDuration(it.m)}</span>`;
+      row.innerHTML = `<div class="badge" style="--c:${colorOf(s)};--tint:${colorOf(s)}24">${initialsOf(s)}</div><div class="t"><b>${esc(s ? nameOf(s) : 'Élève')}</b>${when}</div>${badge}<span class="dur">${fmtDuration(it.m)}</span>`;
       list.appendChild(row);
     });
     const received = state.months[key];
@@ -334,7 +335,7 @@
     const items = monthItems(key).slice().reverse();
     const lines = [`Séances — ${fmtMonth(key)}`, ''];
     const groups = new Map();
-    items.forEach(it => { const s = studentOf(it.s); const name = s ? `${s.n}${s.f ? ' ' + s.f : ''}` : 'Élève'; (groups.get(name) || groups.set(name, []).get(name)).push(it); });
+    items.forEach(it => { const s = studentOf(it.s); const name = s ? nameOf(s) : 'Élève'; (groups.get(name) || groups.set(name, []).get(name)).push(it); });
     [...groups.keys()].sort().forEach(name => {
       const list = groups.get(name); const mins = list.reduce((a, it) => a + it.m, 0);
       lines.push(`${name} — ${list.length} séance${list.length > 1 ? 's' : ''}, ${fmtHours(mins)}`);
